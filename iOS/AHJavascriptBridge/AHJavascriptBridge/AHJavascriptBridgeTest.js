@@ -1,21 +1,24 @@
 ;
 (function() {
-    // for iOS
+    // for iOS & Android
     if (window.AHJavascriptBridge) return;
-
-    var BRIDGE_PROTOCOL_SCHEME = 'ahjb';
-    var BRIDGE_PROTOCOL_HOST = '_AUTOHOME_JAVASCRIPT_BRIDGE_';
-    var BRIDGE_PROTOCOL_URL = BRIDGE_PROTOCOL_SCHEME + '://' + BRIDGE_PROTOCOL_HOST;
 
     var METHOD_ON_JS_BRIDGE_READY = 'ON_JS_BRIDGE_READY';
     var METHOD_GET_JS_BIND_METHOD_NAMES = 'GET_JS_BIND_METHOD_NAMES';
     var METHOD_GET_NATIVE_BIND_METHOD_NAMES = 'GET_NATIVE_BIND_METHOD_NAMES';
 
-    var iframeTrigger;
+    var BRIDGE_PROTOCOL_URL = 'ahjb://_AUTOHOME_JAVASCRIPT_BRIDGE_'; // iOS
+
+    var iframeTrigger; // iOS
+    var AJI = window._AUTOHOME_JAVASCRIPT_INTERFACE_; // Android
     var commandQueue = [];
     var mapMethod = {};
     var mapCallback = {};
     var callbackNum = 0;
+
+    var ua = navigator.userAgent;
+    var isIOS = ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1 || ua.indexOf('Mac') > -1;
+    var isAndroid = ua.indexOf('Android') > -1 || ua.indexOf('Adr') > -1 || ua.indexOf('Linux') > -1;
 
     /**
      *  调用Native方法
@@ -26,7 +29,7 @@
      */
     function invoke(methodName, methodArgs, callback) {
         var command = _createCommand(methodName, methodArgs, callback, null, null);
-        _trigger(command);
+        _sendCommand(command);
     }
 
     /**
@@ -69,13 +72,23 @@
     }
 
     /**
+     *  检查Native待处理命令(Android)
+     */
+    function _checkNativeCommand() {
+        var strCommands = AJI.getNativeCommands();
+        if (strCommands) {
+            var commands = eval(strCommands);
+            for (var i = 0; i < commands.length; i++) {
+                _handleCommand(commands[i]);
+            }
+        };
+    }
+
+    /**
      * 初始化
      */
     function _init() {
-        iframeTrigger = document.createElement('iframe');
-        iframeTrigger.style.display = 'none';
-        document.documentElement.appendChild(iframeTrigger);
-
+        // 初始化自带的绑定
         _initBindMethods();
 
         // deprecated, 被事件通知取代
@@ -102,17 +115,32 @@
     }
 
     /**
-     *  触发Native检查命令队列
+     *  发送JS命令
      *
      *  @param command 命令
      */
-    function _trigger(command) {
-        commandQueue.push(command);
-        iframeTrigger.src = BRIDGE_PROTOCOL_URL;
+    function _sendCommand(command) {
+        // iOS 触发Native检查命令队列
+        if (isIOS) {
+            if (!iframeTrigger) {
+                iframeTrigger = document.createElement('iframe');
+                iframeTrigger.style.display = 'none';
+                document.documentElement.appendChild(iframeTrigger);
+            }
+            commandQueue.push(command);
+            iframeTrigger.src = BRIDGE_PROTOCOL_URL;
+        }
+        // Android 直接发送命令队列
+        else if (isAndroid) {
+            commandQueue.push(command);
+            var jsonCommands = JSON.stringify(commandQueue);
+            commandQueue = [];
+            AJI.receiveCommands(jsonCommands);
+        }
     }
 
     /**
-     *  Native获取JS待处理的命令组
+     *  Native获取JS待处理的命令组(iOS)
      */
     function _getJsCommands() {
         var jsonCommands = JSON.stringify(commandQueue);
@@ -121,7 +149,7 @@
     }
 
     /**
-     *  接收Native发送的字符串命令组
+     *  接收Native发送的字符串命令组(iOS)
      *
      *  @param strCommands 字符串命令组
      */
@@ -147,7 +175,7 @@
                     method(command.methodArgs, function(result) {
                         if (command.callbackId) {
                             var returnCommand = _createCommand(null, null, null, command.callbackId, result);
-                            _trigger(returnCommand);
+                            _sendCommand(returnCommand);
                         }
                     });
                 }
@@ -194,8 +222,9 @@
         unbindMethod: unbindMethod,
         getJsBindMethodNames: getJsBindMethodNames,
         getNativeBindMethodNames: getNativeBindMethodNames,
-        _getJsCommands: _getJsCommands,
-        _receiveCommands: _receiveCommands,
+        _checkNativeCommand: _checkNativeCommand, // iOS
+        _getJsCommands: _getJsCommands, // Android
+        _receiveCommands: _receiveCommands, // Android
     }
 
     _init();
