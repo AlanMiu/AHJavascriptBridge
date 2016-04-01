@@ -3,34 +3,32 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=gb2312">
     <script type="text/javascript">
-    function init() {
-        // 桥接完成事件
-        document.addEventListener('ON_JS_BRIDGE_READY', function() {
-            log("ON_JS_BRIDGE_READY...");
+    // 桥接完成事件
+    document.addEventListener('ON_JS_BRIDGE_READY', function() {
+        log("ON_JS_BRIDGE_READY...");
 
-            AHJavascriptBridge.bindMethod('callJs', function(args, callback) {
-                if (args)
-                    log('method: callJs, ' + args.constructor.name + '-' + JSON.stringify(args));
-                else
-                    log('method: callJs, null');
+        AHJavascriptBridge.bindMethod('callJs', function(args, callback) {
+            if (args)
+                log('method: callJs, ' + args.constructor.name + '-' + JSON.stringify(args));
+            else
+                log('method: callJs, null');
+            callback(args);
+        });
+
+        AHJavascriptBridge.bindMethod('asyncCallJs', function(args, callback) {
+            if (args)
+                log('method: asyncCallJs, ' + args.constructor.name + '-' + JSON.stringify(args));
+            else
+                log('method: asyncCallJs, null');
+            setTimeout(function() {
+                // 使用return返回结果时, callback将失效
                 callback(args);
-            });
-
-            AHJavascriptBridge.bindMethod('asyncCallJs', function(args, callback) {
-                if (args)
-                    log('method: asyncCallJs, ' + args.constructor.name + '-' + JSON.stringify(args));
-                else
-                    log('method: asyncCallJs, null');
-                setTimeout(function() {
-                    // 使用return返回结果时, callback将失效
-                    callback(args);
-                }, 3000);
-                // 兼容使用return返回结果
-                // return args;
-            });
-
-        }, false);
-    }
+            }, 3000);
+            // 兼容使用return返回结果
+            // return args;
+        });
+        
+    }, false);
 
     // deprecated, 被事件通知取代
     function onBridgeReady() {
@@ -95,7 +93,6 @@
         document.getElementById("log").innerHTML += "<br\>" + i;
     }
 
-    window.onload = init;
     </script>
 </head>
 
