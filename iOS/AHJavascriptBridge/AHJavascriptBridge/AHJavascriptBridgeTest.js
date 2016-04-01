@@ -17,8 +17,8 @@
     var callbackNum = 0;
 
     var ua = navigator.userAgent;
-    var isIOS = ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1 || ua.indexOf('Mac') > -1;
-    var isAndroid = ua.indexOf('Android') > -1 || ua.indexOf('Adr') > -1 || ua.indexOf('Linux') > -1;
+    var isIOS = ua.indexOf('_iphone') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1 || ua.indexOf('Mac') > -1;
+    var isAndroid = ua.indexOf('_android') > -1 || ua.indexOf('Android') > -1 || ua.indexOf('Adr') > -1 || ua.indexOf('Linux') > -1;
 
     /**
      *  调用Native方法
@@ -97,7 +97,7 @@
 
         // 通知JS桥接完成(事件&方法)
         var event = document.createEvent('HTMLEvents');
-        event.initEvent(METHOD_ON_JS_BRIDGE_READY);
+        event.initEvent(METHOD_ON_JS_BRIDGE_READY, false, true);
         document.dispatchEvent(event);
 
         // 通知Native桥接完成
@@ -172,12 +172,19 @@
             if (command.methodName) {
                 var method = mapMethod[command.methodName];
                 if (method) {
-                    method(command.methodArgs, function(result) {
+                    var result = method(command.methodArgs, function(result) {
                         if (command.callbackId) {
                             var returnCommand = _createCommand(null, null, null, command.callbackId, result);
                             _sendCommand(returnCommand);
                         }
                     });
+                    // 兼容使用return返回结果
+                    if (result) {
+                        if (command.callbackId) {
+                            var returnCommand = _createCommand(null, null, null, command.callbackId, result);
+                            _sendCommand(returnCommand);
+                        }
+                    }
                 }
             }
             // 回调命令

@@ -22,9 +22,11 @@
                 else
                     log('method: asyncCallJs, null');
                 setTimeout(function() {
-                    callback(args)
+                    // 使用return返回结果时, callback将失效
+                    callback(args);
                 }, 3000);
-
+                // 兼容使用return返回结果
+                // return args;
             });
 
         }, false);

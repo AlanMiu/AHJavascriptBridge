@@ -5,7 +5,7 @@
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
-        <!--AHKit Demos-->
+        <!--AHJavascriptBridge-->
         <scene sceneID="iUA-Nw-6fh">
             <objects>
                 <tableViewController id="exa-UZ-ZUl" customClass="ViewController" sceneMemberID="viewController">
@@ -26,7 +26,7 @@
                             <outlet property="delegate" destination="exa-UZ-ZUl" id="DnA-hY-9RZ"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="AHKit Demos" id="thZ-M4-6TF"/>
+                    <navigationItem key="navigationItem" title="AHJavascriptBridge" id="thZ-M4-6TF"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="YPp-Xd-xSZ" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -56,7 +56,7 @@
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="EUx-tI-0N0">
                                         <rect key="frame" x="8" y="207" width="39" height="30"/>
-                                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                                        <color key="backgroundColor" red="0.93725490196078431" green="0.93725490196078431" blue="0.95686274509803926" alpha="1" colorSpace="calibratedRGB"/>
                                         <state key="normal" title="callJs">
                                             <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
@@ -66,7 +66,7 @@
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="NrA-jN-94a">
                                         <rect key="frame" x="55" y="207" width="82" height="30"/>
-                                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                                        <color key="backgroundColor" red="0.93725490196078431" green="0.93725490196078431" blue="0.95686274509803926" alpha="1" colorSpace="calibratedRGB"/>
                                         <state key="normal" title="asyncCallJs">
                                             <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
@@ -76,7 +76,7 @@
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dgP-bk-DzM">
                                         <rect key="frame" x="145" y="207" width="170" height="30"/>
-                                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                                        <color key="backgroundColor" red="0.93725490196078431" green="0.93725490196078431" blue="0.95686274509803926" alpha="1" colorSpace="calibratedRGB"/>
                                         <state key="normal" title="getJsBindMethodNames">
                                             <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
