@@ -2,101 +2,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=gb2312">
-    <script type="text/javascript">
-
-    // 桥接完成事件
-    document.addEventListener('ON_JS_BRIDGE_READY', function() {
-        log("ON_JS_BRIDGE_READY...");
-
-        AHJavascriptBridge.bindMethod('callJs', function(args, callback) {
-            if (args)
-                log('method: callJs, ' + args.constructor.name + '-' + JSON.stringify(args));
-            else
-                log('method: callJs, null');
-            callback(args);
-        });
-
-        AHJavascriptBridge.bindMethod('asyncCallJs', function(args, callback) {
-            if (args)
-                log('method: asyncCallJs, ' + args.constructor.name + '-' + JSON.stringify(args));
-            else
-                log('method: asyncCallJs, null');
-            setTimeout(function() {
-                // 使用return返回结果时, callback将失效
-                callback(args);
-            }, 3000);
-            // 兼容使用return返回结果
-            // return args;
-        });
-
-    }, false);
-
-    // deprecated, 被事件通知取代
-    function onBridgeReady() {
-        log("onBridgeReady...(deprecated)");
-    }
-
-    // 调用Native
-    function callNative() {
-        log("invoke: callNative(args - object)");
-        AHJavascriptBridge.invoke('callNative', {
-            'JS': 'Hello Native'
-        }, function(res) {
-            log('return:' + res.constructor.name + '-' + JSON.stringify(res));
-        });
-
-        log("invoke: callNative(args - array)");
-        AHJavascriptBridge.invoke('callNative', ['Hi', 'Hey', 'hello'], function(res) {
-            log('return:' + res.constructor.name + '-' + JSON.stringify(res));
-        });
-
-        log("invoke: callNative(args - string)");
-        AHJavascriptBridge.invoke('callNative', 'Hello Native...', function(res) {
-            log('return:' + res.constructor.name + '-' + JSON.stringify(res));
-        });
-
-        log("invoke: callNative(args - null)");
-        AHJavascriptBridge.invoke('callNative', null, function(res) {
-            if (res)
-                log('return:' + res.constructor.name + '-' + JSON.stringify(res));
-            else
-                log('return: null');
-        });
-    }
-
-    // 异步调用Native
-    function asyncCallNative() {
-        log("async invoke: asyncCallNative(args - object)");
-        AHJavascriptBridge.invoke('asyncCallNative', {
-            'JS': 'Hello Native...'
-        }, function(res) {
-            log('return:' + res.constructor.name + '-' + JSON.stringify(res));
-        });
-    }
-
-    // 获取Native绑定的方法名
-    function getNativeBindMethodNames() {
-        log("getNativeBindMethodNames()");
-        AHJavascriptBridge.getNativeBindMethodNames(function(res) {
-            log('return: ' + res.constructor.name + '-' + JSON.stringify(res));
-        });
-    }
-
-    // deprecated, 被getNativeBindMethodNames()取代
-    function getNativeBindMethods() {
-        log("invoke: getNativeBindMethods");
-        AHJavascriptBridge.invoke('getNativeBindMethods', null, function(res) {
-            log('->' + res.constructor.name + '-' + JSON.stringify(res));
-        });
-    }
-
-    function log(i) {
-        var element = document.getElementById("log");
-        element.innerHTML += "\n" + i;
-        element.scrollTop = element.scrollHeight;
-    }
-
-    </script>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 </head>
 
 <body>
@@ -105,7 +11,101 @@
     <input type="button" value="getNativeBindMethods(deprecated)" onclick="javascript:window.getNativeBindMethods()">
     <input type="button" value="getNativeBindMethodNames" onclick="javascript:window.getNativeBindMethodNames()">
     <br/>
-    <textarea id="log" cols="50" rows="10" wrap="physical">--- Html Log ---</textarea>
+    <div id="log" style="font-size:12px;">--- Html Log ---</div>
 </body>
+
+<script type="text/javascript">
+// 桥接完成事件
+document.addEventListener('ON_JS_BRIDGE_READY', function() {
+    log("ON_JS_BRIDGE_READY...");
+
+    AHJavascriptBridge.bindMethod('callJs', function(args, callback) {
+        if (args)
+            log('method: callJs, ' + args.constructor.name + '-' + JSON.stringify(args));
+        else
+            log('method: callJs, null');
+        callback(args);
+    });
+
+    AHJavascriptBridge.bindMethod('asyncCallJs', function(args, callback) {
+        if (args)
+            log('method: asyncCallJs, ' + args.constructor.name + '-' + JSON.stringify(args));
+        else
+            log('method: asyncCallJs, null');
+        setTimeout(function() {
+            // 使用return返回结果时, callback将失效
+            callback(args);
+        }, 3000);
+        // 兼容使用return返回结果
+        // return args;
+    });
+
+}, false);
+
+// deprecated, 被事件通知取代
+function onBridgeReady() {
+    log("onBridgeReady...(deprecated)");
+}
+
+// 调用Native
+function callNative() {
+    log("invoke: callNative(args - object)");
+    AHJavascriptBridge.invoke('callNative', {
+        'JS': 'Hello Native'
+    }, function(res) {
+        log('return:' + res.constructor.name + '-' + JSON.stringify(res));
+    });
+
+    log("invoke: callNative(args - array)");
+    AHJavascriptBridge.invoke('callNative', ['Hi', 'Hey', 'hello'], function(res) {
+        log('return:' + res.constructor.name + '-' + JSON.stringify(res));
+    });
+
+    log("invoke: callNative(args - string)");
+    AHJavascriptBridge.invoke('callNative', 'Hello Native...', function(res) {
+        log('return:' + res.constructor.name + '-' + JSON.stringify(res));
+    });
+
+    log("invoke: callNative(args - null)");
+    AHJavascriptBridge.invoke('callNative', null, function(res) {
+        if (res)
+            log('return:' + res.constructor.name + '-' + JSON.stringify(res));
+        else
+            log('return: null');
+    });
+}
+
+// 异步调用Native
+function asyncCallNative() {
+    log("async invoke: asyncCallNative(args - object)");
+    AHJavascriptBridge.invoke('asyncCallNative', {
+        'JS': 'Hello Native...'
+    }, function(res) {
+        log('return:' + res.constructor.name + '-' + JSON.stringify(res));
+    });
+}
+
+// 获取Native绑定的方法名
+function getNativeBindMethodNames() {
+    log("getNativeBindMethodNames()");
+    AHJavascriptBridge.getNativeBindMethodNames(function(res) {
+        log('return: ' + res.constructor.name + '-' + JSON.stringify(res));
+    });
+}
+
+// deprecated, 被getNativeBindMethodNames()取代
+function getNativeBindMethods() {
+    log("invoke: getNativeBindMethods");
+    AHJavascriptBridge.invoke('getNativeBindMethods', null, function(res) {
+        log('->' + res.constructor.name + '-' + JSON.stringify(res));
+    });
+}
+
+function log(i) {
+    document.getElementById("log").innerHTML += "<br\>" + i;
+}
+</script>
+<!-- 引入bridge.js文件时, 原生将不会再重复注入 -->
+<script type="text/javascript" src="AHJavascriptBridgeTest.js"></script>
 
 </html>
