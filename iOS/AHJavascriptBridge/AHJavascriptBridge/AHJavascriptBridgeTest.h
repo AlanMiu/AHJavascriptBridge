@@ -9,10 +9,10 @@
 #import <UIKit/UIKit.h>
 #import "AHJavascriptBridge.h"
 
-@interface AHJavascriptBridgeTest : UIViewController <UIWebViewDelegate, AHJBBatchBindMethod>
+@interface AHJavascriptBridgeTest : UIViewController <UIWebViewDelegate, WKNavigationDelegate, AHJBBatchBindMethod>
 
 @property (weak, nonatomic) IBOutlet UIButton *callJS;
 @property (weak, nonatomic) IBOutlet UITextView *tvLog;
-@property (weak, nonatomic) IBOutlet UIWebView *webView;
+@property (weak, nonatomic) IBOutlet UIView *webView;
 
 @end

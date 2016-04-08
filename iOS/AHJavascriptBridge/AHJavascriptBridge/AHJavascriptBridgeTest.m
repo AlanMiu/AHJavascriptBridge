@@ -20,34 +20,42 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    self.navigationController.navigationBar.translucent = NO;
+    
     [self log:@"--- Native Log ---"];
     
-    _webView.delegate = self;
+    WKWebView *wv = [[WKWebView alloc] initWithFrame:_webView.bounds];
+//    wv.delegate = self;
+    wv.navigationDelegate = self;
+    
+    // 创建bridge
+    _jsBridge = [[AHJavascriptBridge alloc] initWhitWebview:wv method:self];
+//    _jsBridge.isDebug = YES;
     
     NSString* htmlPath = [[NSBundle mainBundle] pathForResource:@"AHJavascriptBridgeTest" ofType:@"html"];
     NSString* appHtml = [NSString stringWithContentsOfFile:htmlPath encoding:NSUTF8StringEncoding error:nil];
     NSURL *baseURL = [NSURL fileURLWithPath:htmlPath];
-    [_webView loadHTMLString:appHtml baseURL:baseURL];
+    [wv loadHTMLString:appHtml baseURL:baseURL];
     
-    // 创建bridge
-    _jsBridge = [[AHJavascriptBridge alloc] initWhitWebview:_webView method:self];
-//    _jsBridge.isDebug = YES;
+    [_webView addSubview:wv];
     
     __weak typeof(self) wSelf = self;
-    
+
     // 桥接完成事件
     [_jsBridge onJsBridgeReady:^(id args, AHJBCallbackBlock callback) {
         [wSelf log:@"ON_JS_BRIDGE_READY..."];
         callback(nil);
     }];
-    
+
     // deprecated, 被onJsBridgeReady()取代,
     [_jsBridge bindMethod:@"onBridgeReady" method:^(id args, AHJBCallbackBlock callback) {
         [wSelf log:@"onBridgeReady..."];
         callback(nil);
     }];
-    
-    _webView.delegate = self;
+
+    // 测试修改delegate是否正常
+//    wv.delegate = self;
+    wv.navigationDelegate = self;
 }
 
 - (void)batchBindMethodWhitWebView:(UIWebView *)webView bridge:(AHJavascriptBridge *)bridge {
@@ -122,15 +130,54 @@
 
 #pragma mark - UIWebViewDelegate
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
-    NSLog(@"shouldStartLoadWithRequest");
+    NSLog(@"#UI# shouldStartLoadWithRequest");
     return YES;
 }
 
 - (void)webViewDidStartLoad:(UIWebView *)webView {
-    NSLog(@"webViewDidStartLoad");
+    NSLog(@"#UI# webViewDidStartLoad");
 }
 - (void)webViewDidFinishLoad:(UIWebView *)webView {
-    NSLog(@"webViewDidFinishLoad");
+    NSLog(@"#UI# webViewDidFinishLoad");
+}
+
+#pragma mark - WKNavigationDelegate
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
+    NSLog(@"#WK# decidePolicyForNavigationAction: %@", navigationAction);
+    decisionHandler(WKNavigationActionPolicyAllow);
+}
+
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler {
+    NSLog(@"#WK# decidePolicyForNavigationResponse: %@", navigationResponse);
+    decisionHandler(WKNavigationResponsePolicyAllow);
+}
+
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation {
+    NSLog(@"didStartProvisionalNavigation: %@", navigation);
+}
+
+- (void)webView:(WKWebView *)webView didReceiveServerRedirectForProvisionalNavigation:(WKNavigation *)navigation {
+    NSLog(@"#WK# didReceiveServerRedirectForProvisionalNavigation: %@", navigation);
+}
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    NSLog(@"#WK# didFailProvisionalNavigation: %@, %@", navigation, error);
+}
+
+- (void)webView:(WKWebView *)webView didCommitNavigation:(WKNavigation *)navigation {
+    NSLog(@"#WK# didCommitNavigation: %@", navigation);
+}
+
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
+    NSLog(@"#WK# didFinishNavigation: %@", navigation);
+}
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    NSLog(@"#WK# didFailNavigation: %@, %@", navigation, error);
+}
+
+- (void)webView:(WKWebView *)webView didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *credential))completionHandler {
+    NSLog(@"#WK# didReceiveAuthenticationChallenge: %@", challenge);
 }
 
 - (void)didReceiveMemoryWarning {
