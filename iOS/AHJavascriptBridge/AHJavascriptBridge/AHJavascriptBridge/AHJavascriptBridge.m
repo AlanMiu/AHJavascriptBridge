@@ -28,11 +28,25 @@
 #define COMMAND_RETURN_CALLBACK_ID      @"returnCallbackId"
 #define COMMAND_RETURN_CALLBACK_DATA    @"returnCallbackData"
 
+#define IS_UIWEBVIEW(view) (WebViewType(view) == 1)
+#define IS_WKWEBVIEW(view) (WebViewType(view) == 2)
+
 // AHJavascriptBridgeTest.js文件压缩后的代码
 #define JS_INJECTION @";(function(){if(window.AHJavascriptBridge){return}var METHOD_ON_JS_BRIDGE_READY='ON_JS_BRIDGE_READY';var METHOD_GET_JS_BIND_METHOD_NAMES='GET_JS_BIND_METHOD_NAMES';var METHOD_GET_NATIVE_BIND_METHOD_NAMES='GET_NATIVE_BIND_METHOD_NAMES';var BRIDGE_PROTOCOL_URL='ahjb://_AUTOHOME_JAVASCRIPT_BRIDGE_';var iframeTrigger;var AJI=window._AUTOHOME_JAVASCRIPT_INTERFACE_;var commandQueue=[];var mapMethod={};var mapCallback={};var callbackNum=0;var ua=navigator.userAgent;var isIOS=ua.indexOf('_iphone')>-1||ua.indexOf('iPhone')>-1||ua.indexOf('iPad')>-1||ua.indexOf('Mac')>-1;var isAndroid=ua.indexOf('_android')>-1||ua.indexOf('Android')>-1||ua.indexOf('Adr')>-1||ua.indexOf('Linux')>-1;function invoke(methodName,methodArgs,callback){var command=_createCommand(methodName,methodArgs,callback,null,null);_sendCommand(command)}function bindMethod(name,method){mapMethod[name]=method}function unbindMethod(name){delete mapMethod[name]}function getJsBindMethodNames(){var methodNames=[];for(var methodName in mapMethod){methodNames.push(methodName)}return methodNames}function getNativeBindMethodNames(callback){invoke(METHOD_GET_NATIVE_BIND_METHOD_NAMES,null,callback)}function _checkNativeCommand(){var strCommands=AJI.getNativeCommands();if(strCommands){var commands=eval(strCommands);for(var i=0;i<commands.length;i++){_handleCommand(commands[i])}}}function _init(){_initBindMethods();if(typeof onBridgeReady==='function'){onBridgeReady()}var event=document.createEvent('HTMLEvents');event.initEvent(METHOD_ON_JS_BRIDGE_READY,false,true);document.dispatchEvent(event);invoke(METHOD_ON_JS_BRIDGE_READY,null,null)}function _initBindMethods(){bindMethod(METHOD_GET_JS_BIND_METHOD_NAMES,function(args,callback){callback(getJsBindMethodNames())})}function _sendCommand(command){if(isIOS){if(!iframeTrigger){iframeTrigger=document.createElement('iframe');iframeTrigger.style.display='none';document.documentElement.appendChild(iframeTrigger)}commandQueue.push(command);iframeTrigger.src=BRIDGE_PROTOCOL_URL}else{if(isAndroid){commandQueue.push(command);var jsonCommands=JSON.stringify(commandQueue);commandQueue=[];AJI.receiveCommands(jsonCommands)}}}function _getJsCommands(){var jsonCommands=JSON.stringify(commandQueue);commandQueue=[];return jsonCommands}function _receiveCommands(strCommands){var commands=eval(strCommands);for(var i=0;i<commands.length;i++){_handleCommand(commands[i])}}function _handleCommand(command){setTimeout(function(){if(!command){return}if(command.methodName){var method=mapMethod[command.methodName];if(method){var result=method(command.methodArgs,function(result){if(command.callbackId){var returnCommand=_createCommand(null,null,null,command.callbackId,result);_sendCommand(returnCommand)}});if(result){if(command.callbackId){var returnCommand=_createCommand(null,null,null,command.callbackId,result);_sendCommand(returnCommand)}}}}else{if(command.returnCallbackId){var callback=mapCallback[command.returnCallbackId];if(callback){callback(command.returnCallbackData);delete mapCallback[command.returnCallbackId]}}}})}function _createCommand(methodName,methodArgs,callback,returnCallbackId,returnCallbackData){var command={};if(methodName){command.methodName=methodName}if(methodArgs){command.methodArgs=methodArgs}if(callback){callbackNum++;var callbackId='js_callback_'+callbackNum;mapCallback[callbackId]=callback;command.callbackId=callbackId}if(returnCallbackId){command.returnCallbackId=returnCallbackId}if(returnCallbackData){command.returnCallbackData=returnCallbackData}return command}window.AHJavascriptBridge={invoke:invoke,bindMethod:bindMethod,unbindMethod:unbindMethod,getJsBindMethodNames:getJsBindMethodNames,getNativeBindMethodNames:getNativeBindMethodNames,_checkNativeCommand:_checkNativeCommand,_getJsCommands:_getJsCommands,_receiveCommands:_receiveCommands};_init()})();"
 
+NSInteger WebViewType(UIView *view) {
+    static NSInteger webViewType = 0;
+    if (view && webViewType == 0) {
+        if ([NSStringFromClass(view.class) isEqualToString:@"UIWebView"])
+            webViewType = 1;
+        else if ([NSStringFromClass(view.class) isEqualToString:@"WKWebView"])
+            webViewType = 2;
+    }
+    return webViewType;
+}
+
 @interface AHJavascriptBridge () {
-    UIWebView *_webView;
+    UIView *_webView;
     NSMutableArray *_commandQueue;
     NSMutableDictionary *_dicCallback;
     NSMutableDictionary *_dicMethod;
@@ -45,30 +59,42 @@
 @implementation AHJavascriptBridge
 
 - (id)init {
-    NSAssert(0, @"error, should call initWhitWebview");
-    return nil;
+    @throw [NSException exceptionWithName:@"AHJavascriptBridgeException" reason:@"should call initWhitWebview" userInfo:nil];
 }
 
-- (id)initWhitWebview:(UIWebView *)webView {
+- (id)initWhitWebview:(UIView *)webView {
     return [self initWhitWebview:webView method:nil];
 }
 
-- (id)initWhitWebview:(UIWebView *)webView method:(id<AHJBBatchBindMethod>)method {
+- (id)initWhitWebview:(UIView *)webView method:(id<AHJBBatchBindMethod>)method {
+    if (!webView || (!IS_UIWEBVIEW(webView) && !IS_WKWEBVIEW(webView)))
+        @throw [NSException exceptionWithName:@"AHJavascriptBridgeException" reason:@"webview must be UIWebView or WKWebView" userInfo:nil];
+    
     self = [super init];
     if (self) {
         _webView = webView;
-        _delegate = webView.delegate;
-        _webView.delegate = self;
+        if (IS_UIWEBVIEW(_webView)) {
+            // 替换delegate
+            _delegate = ((UIWebView *)webView).delegate;
+            ((UIWebView *)webView).delegate = self;
+            // 监听UIWebView的delegate变更
+            [webView addObserver:self forKeyPath:@"delegate" options:NSKeyValueObservingOptionNew context:nil];
+        } else if (IS_WKWEBVIEW(_webView)) {
+            // 替换navigationDelegate
+            _delegate = ((WKWebView *)webView).navigationDelegate;
+            ((WKWebView *)webView).navigationDelegate = self;
+            // 监听WKWebView的navigationDelegate变更
+            [webView addObserver:self forKeyPath:@"navigationDelegate" options:NSKeyValueObservingOptionNew context:nil];
+        }
         _commandQueue = [[NSMutableArray alloc] init];
         _dicCallback = [[NSMutableDictionary alloc] init];
         _dicMethod= [[NSMutableDictionary alloc] init];
         
         [self initBindMethods];
-
+        
+        // 批量绑定方法
         if (method)
             [method batchBindMethodWhitWebView:webView bridge:self];
-        
-        [_webView addObserver:self forKeyPath:@"delegate" options:NSKeyValueObservingOptionNew context:nil];
     }
     return self;
 }
@@ -167,7 +193,7 @@
             [_commandQueue addObject:[command toJson]];
         }
         if ([_commandQueue count] > 0) {
-            [self call:JS_RECEIVE_COMMANDS args:_commandQueue];
+            [self evaluateFunction:JS_RECEIVE_COMMANDS args:_commandQueue completionHandler:nil];
             [_commandQueue removeAllObjects];
         }
     }
@@ -176,12 +202,11 @@
 /**
  *  直接调用JS方法
  *
- *  @param function 方法名称
- *  @param args     方法参数
- *
- *  @return 执行方法后的返回值
+ *  @param function          方法名称
+ *  @param args              方法参数
+ *  @param completionHandler 返回值
  */
-- (NSString *)call:(NSString *)function args:(id)args {
+- (void)evaluateFunction:(NSString *)function args:(id)args completionHandler:(void (^)(id result, NSError *error))completionHandler {
     NSString *jsonArgs = nil;
     if (args) {
         jsonArgs = [self jsonToString:args];
@@ -200,21 +225,33 @@
         strScript = [NSString stringWithFormat:@"AHJavascriptBridge.%@();", function];
     }
     
-    NSString *result = [_webView stringByEvaluatingJavaScriptFromString:strScript];
-    return result;
+    if (IS_UIWEBVIEW(_webView)) {
+        NSString *result = [(UIWebView *)_webView stringByEvaluatingJavaScriptFromString:strScript];
+        if (completionHandler)
+            completionHandler(result, nil);
+    } else if(IS_WKWEBVIEW(_webView)) {
+        [(WKWebView *)_webView evaluateJavaScript:strScript completionHandler:^(id result, NSError *error) {
+        if (completionHandler)
+            completionHandler(result, error);
+        }];
+    }
 }
 
 /**
  *  接收JS发送的字符串命令组
  */
 - (void)receiveCommands {
-    NSString *strCommands = [self call:JS_GET_JS_COMMANDS args:nil];
-    id commands = [self stringToJson:strCommands];
-    if ([commands isKindOfClass:[NSArray class]]) {
-        for (NSDictionary *jsonCommand in commands) {
-            [self handleCommand:jsonCommand];
+    [self evaluateFunction:JS_GET_JS_COMMANDS args:nil completionHandler:^(id result, NSError *error) {
+        if (!error) {
+            NSString *strCommands = result;
+            id commands = [self stringToJson:strCommands];
+            if ([commands isKindOfClass:[NSArray class]]) {
+                for (NSDictionary *jsonCommand in commands) {
+                    [self handleCommand:jsonCommand];
+                }
+            }
         }
-    }
+    }];
 }
 
 /**
@@ -256,11 +293,24 @@
  */
 - (void)checkIsBridgeReady {
     if (!_isBridgeReady) {
-        _isBridgeReady = [[_webView stringByEvaluatingJavaScriptFromString:@"typeof AHJavascriptBridge == 'object'"] isEqualToString:@"true"];
-    }
-    if (!_isBridgeReady) {
-        [_webView stringByEvaluatingJavaScriptFromString:[self injectionCode]];
-        _isBridgeReady = YES;
+        if (IS_UIWEBVIEW(_webView)) {
+            _isBridgeReady = [[(UIWebView *)_webView stringByEvaluatingJavaScriptFromString:@"typeof AHJavascriptBridge == 'object'"] isEqualToString:@"true"];
+            if (!_isBridgeReady) {
+                [(UIWebView *)_webView stringByEvaluatingJavaScriptFromString:[self injectionCode]];
+                _isBridgeReady = YES;
+            }
+        } else if (IS_WKWEBVIEW(_webView)) {
+            [(WKWebView *)_webView evaluateJavaScript:@"typeof AHJavascriptBridge == 'object'" completionHandler:^(id result, NSError *error) {
+                if (!error)
+                    _isBridgeReady = [result boolValue];
+                if (!_isBridgeReady) {
+                    [(WKWebView *)_webView evaluateJavaScript:[self injectionCode] completionHandler:^(id result, NSError *error) {
+                        if (!error)
+                            _isBridgeReady = YES;
+                    }];
+                }
+            }];
+        }
     }
 }
 
@@ -295,7 +345,7 @@
 - (NSString *)createCallbackId:(AHJBCallbackBlock)callback {
     if (callback) {
         NSString *callbackId = [NSString stringWithFormat:@"native_callback_%ld", (long)++_callbackNum];
-        _dicCallback[callbackId] = [callback copy];
+        [_dicCallback setObject:callback forKey:callbackId];
         return callbackId;
     }
     return nil;
@@ -316,11 +366,33 @@
     return js;
 }
 
+/**
+ *  监听WebView的delegate变更并修正
+ */
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    UIWebView *webView = object;
-    if (webView == _webView && webView.delegate != self) {
-        _delegate = webView.delegate;
-        _webView.delegate = self;
+    if (IS_UIWEBVIEW(object)) {
+        UIWebView *webView = object;
+        if (webView == _webView && webView.delegate != self) {
+            _delegate = webView.delegate;
+            webView.delegate = self;
+        }
+    } else if (IS_WKWEBVIEW(object)) {
+        WKWebView *webView = object;
+        if (webView == _webView && webView.navigationDelegate != self) {
+            _delegate = webView.navigationDelegate;
+            webView.navigationDelegate = self;
+        }
+    }
+}
+
+/**
+ *  移除WebView的delegate监听
+ */
+- (void)dealloc {
+    if (IS_UIWEBVIEW(_webView)) {
+        [_webView removeObserver:self forKeyPath:@"delegate"];
+    } else if (IS_WKWEBVIEW(_webView)) {
+        [_webView removeObserver:self forKeyPath:@"navigationDelegate"];
     }
 }
 
@@ -374,8 +446,99 @@
     }
 }
 
-- (void)dealloc {
-    [_webView removeObserver:self forKeyPath:@"delegate"];
+#pragma mark - WKNavigationDelegate
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
+    if (webView != _webView) decisionHandler(WKNavigationActionPolicyAllow);
+    
+    NSURLRequest *request = navigationAction.request;
+    
+    if ([request.URL.absoluteString isEqualToString:@"about:blank"]) {
+        decisionHandler(WKNavigationActionPolicyCancel);
+    }
+    
+    if ([request.URL.scheme isEqualToString:BRIDGE_PROTOCOL_SCHEME]) {
+        if ([request.URL.host isEqualToString:BRIDGE_PROTOCOL_HOST]) {
+            [self receiveCommands];
+        }
+        decisionHandler(WKNavigationActionPolicyCancel);
+    }
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(webView:decidePolicyForNavigationAction:decisionHandler:)]) {
+        [_delegate webView:webView decidePolicyForNavigationAction:navigationAction decisionHandler:decisionHandler];
+    } else {
+        decisionHandler(WKNavigationActionPolicyAllow);
+    }
+}
+
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler {
+    if (webView != _webView) decisionHandler(WKNavigationResponsePolicyAllow);
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(webView:decidePolicyForNavigationResponse:decisionHandler:)]) {
+        [_delegate webView:webView decidePolicyForNavigationResponse:navigationResponse decisionHandler:decisionHandler];
+    } else {
+        decisionHandler(WKNavigationResponsePolicyAllow);
+    }
+}
+
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation {
+    if (webView != _webView) return;
+    
+    _isBridgeReady = NO;
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(webView:didStartProvisionalNavigation:)]) {
+        [_delegate webView:webView didStartProvisionalNavigation:navigation];
+    }
+}
+
+- (void)webView:(WKWebView *)webView didReceiveServerRedirectForProvisionalNavigation:(WKNavigation *)navigation {
+    if (webView != _webView) return;
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(webView:didReceiveServerRedirectForProvisionalNavigation:)]) {
+        [_delegate webView:webView didReceiveServerRedirectForProvisionalNavigation:navigation];
+    }
+}
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    if (webView != _webView) return;
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(webView:didFailProvisionalNavigation:withError:)]) {
+        [_delegate webView:webView didFailProvisionalNavigation:navigation withError:error];
+    }
+}
+
+- (void)webView:(WKWebView *)webView didCommitNavigation:(WKNavigation *)navigation {
+    if (webView != _webView) return;
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(webView:didCommitNavigation:)]) {
+        [_delegate webView:webView didCommitNavigation:navigation];
+    }
+}
+
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
+    if (webView != _webView) return;
+    
+    [self sendCommand:nil];
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(webView:didFinishNavigation:)]) {
+        [_delegate webView:webView didFinishNavigation:navigation];
+    }
+}
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    if (webView != _webView) return;
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(webView:didFailNavigation:withError:)]) {
+        [_delegate webView:webView didFailNavigation:navigation withError:error];
+    }
+
+}
+
+- (void)webView:(WKWebView *)webView didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential *credential))completionHandler {
+    if (webView != _webView) return;
+    
+    if (_delegate && [_delegate respondsToSelector:@selector(webView:didReceiveAuthenticationChallenge:completionHandler:)]) {
+        [_delegate webView:webView didReceiveAuthenticationChallenge:challenge completionHandler:completionHandler];
+    }
 }
 
 @end

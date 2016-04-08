@@ -7,20 +7,27 @@
 //
 
 #import <UIKit/UIKit.h>
+#ifdef __IPHONE_8_0
+#import <WebKit/WebKit.h>
+#endif
 
 typedef void (^AHJBCallbackBlock)(id result);                           // 回调方法
 typedef void (^AHJBMethodBlock)(id args, AHJBCallbackBlock callback);   // 方法实现
 
 @protocol AHJBBatchBindMethod;
 
+#ifdef __IPHONE_8_0
+@interface AHJavascriptBridge : NSObject<UIWebViewDelegate, WKNavigationDelegate>
+#else
 @interface AHJavascriptBridge : NSObject<UIWebViewDelegate>
+#endif
 
-@property (nonatomic, weak) id<UIWebViewDelegate> delegate;
+@property (nonatomic, weak) id delegate;    // UIWebViewDelegate or WKNavigationDelegate
+@property (nonatomic, readonly) BOOL isDebug1;
 @property (nonatomic) BOOL isDebug;
 
-- (instancetype)initWhitWebview:(UIWebView *)webView;
-
-- (instancetype)initWhitWebview:(UIWebView *)webView method:(id<AHJBBatchBindMethod>)method;
+- (instancetype)initWhitWebview:(UIView *)webView;
+- (instancetype)initWhitWebview:(UIView *)webView method:(id<AHJBBatchBindMethod>)method;
 
 /**
  *  调用JS方法
@@ -75,7 +82,7 @@ typedef void (^AHJBMethodBlock)(id args, AHJBCallbackBlock callback);   // 方�
 @protocol AHJBBatchBindMethod <NSObject>
 
 @required
-- (void)batchBindMethodWhitWebView:(UIWebView *)webView bridge:(AHJavascriptBridge *)bridge;
+- (void)batchBindMethodWhitWebView:(UIView *)webView bridge:(AHJavascriptBridge *)bridge;
 
 @end
 
