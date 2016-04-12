@@ -225,16 +225,18 @@ NSInteger WebViewType(UIView *view) {
         strScript = [NSString stringWithFormat:@"AHJavascriptBridge.%@();", function];
     }
     
-    if (IS_UIWEBVIEW(_webView)) {
-        NSString *result = [(UIWebView *)_webView stringByEvaluatingJavaScriptFromString:strScript];
-        if (completionHandler)
-            completionHandler(result, nil);
-    } else if(IS_WKWEBVIEW(_webView)) {
-        [(WKWebView *)_webView evaluateJavaScript:strScript completionHandler:^(id result, NSError *error) {
-        if (completionHandler)
-            completionHandler(result, error);
-        }];
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (IS_UIWEBVIEW(_webView)) {
+            NSString *result = [(UIWebView *)_webView stringByEvaluatingJavaScriptFromString:strScript];
+            if (completionHandler)
+                completionHandler(result, nil);
+        } else if(IS_WKWEBVIEW(_webView)) {
+            [(WKWebView *)_webView evaluateJavaScript:strScript completionHandler:^(id result, NSError *error) {
+                if (completionHandler)
+                    completionHandler(result, error);
+            }];
+        }
+    });
 }
 
 /**
