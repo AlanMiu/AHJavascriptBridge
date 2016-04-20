@@ -26,8 +26,8 @@ typedef void (^AHJBMethodBlock)(id args, AHJBCallbackBlock callback);   // 方�
 @property (nonatomic, readonly) BOOL isDebug1;
 @property (nonatomic) BOOL isDebug;
 
-- (instancetype)initWhitWebview:(UIView *)webView;
-- (instancetype)initWhitWebview:(UIView *)webView method:(id<AHJBBatchBindMethod>)method;
+- (instancetype)initWithWebview:(UIView *)webView;
+- (instancetype)initWithWebview:(UIView *)webView method:(id<AHJBBatchBindMethod>)method;
 
 /**
  *  调用JS方法

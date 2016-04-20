@@ -62,11 +62,11 @@ NSInteger WebViewType(UIView *view) {
     @throw [NSException exceptionWithName:@"AHJavascriptBridgeException" reason:@"should call initWhitWebview" userInfo:nil];
 }
 
-- (id)initWhitWebview:(UIView *)webView {
-    return [self initWhitWebview:webView method:nil];
+- (id)initWithWebview:(UIView *)webView {
+    return [self initWithWebview:webView method:nil];
 }
 
-- (id)initWhitWebview:(UIView *)webView method:(id<AHJBBatchBindMethod>)method {
+- (id)initWithWebview:(UIView *)webView method:(id<AHJBBatchBindMethod>)method {
     if (!webView || (!IS_UIWEBVIEW(webView) && !IS_WKWEBVIEW(webView)))
         @throw [NSException exceptionWithName:@"AHJavascriptBridgeException" reason:@"webview must be UIWebView or WKWebView" userInfo:nil];
     

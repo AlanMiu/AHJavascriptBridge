@@ -29,7 +29,7 @@
     wv.navigationDelegate = self;
     
     // 创建bridge
-    _jsBridge = [[AHJavascriptBridge alloc] initWhitWebview:wv method:self];
+    _jsBridge = [[AHJavascriptBridge alloc] initWithWebview:wv method:self];
 //    _jsBridge.isDebug = YES;
     
     NSString* htmlPath = [[NSBundle mainBundle] pathForResource:@"AHJavascriptBridgeTest" ofType:@"html"];
